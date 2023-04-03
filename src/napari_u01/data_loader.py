@@ -6,8 +6,9 @@ import numpy as np
 import tifffile as tif
 from napari.layers import Image, Labels
 from qtpy.QtWidgets import QFileDialog
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QPushButton, \
-    QLabel, QLineEdit, QHBoxLayout
+from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+                            QLineEdit, QLabel, QFileDialog, QDialog,
+                            QGridLayout, QCheckBox)
 
 
 class DataLoaderModel:
@@ -109,11 +110,59 @@ class DataLoaderView(QWidget):
     def __init__(self, napari_viewer):
         super().__init__()
         layout = QVBoxLayout()
+
+        # Add Load YAML Config UI
+        load_yaml_layout = QHBoxLayout()
+        self.yaml_path_edit = QLineEdit()
+        self.load_yaml_button = QPushButton("Load Config")
+        load_yaml_layout.addWidget(QLabel("YAML Config:"))
+        load_yaml_layout.addWidget(self.yaml_path_edit)
+        load_yaml_layout.addWidget(self.load_yaml_button)
+
+        # Add Load Images and Labels UI
+        layout.addLayout(load_yaml_layout)
         self.load_button = QPushButton("Load Images and Labels")
         layout.addWidget(self.load_button)
         self.setLayout(layout)
 
+        # Add Save Labels UI
+        save_labels_layout = QHBoxLayout()
+        self.save_path_edit = QLineEdit()
+        self.save_labels_button = QPushButton("Save Labels")
+        save_labels_layout.addWidget(QLabel("Save Path:"))
+        save_labels_layout.addWidget(self.save_path_edit)
+        save_labels_layout.addWidget(self.save_labels_button)
+        layout.addLayout(save_labels_layout)
+
+        self.setLayout(layout)
         self.viewer = napari_viewer
+
+    def create_save_dialog(self, label_layers):
+        save_dialog = QDialog(self)
+        save_dialog.setWindowTitle("Save Labels")
+
+        grid_layout = QGridLayout()
+
+        checkboxes = []
+        line_edits = []
+
+        for i, label_layer in enumerate(label_layers):
+            checkbox = QCheckBox(label_layer.name)
+            line_edit = QLineEdit(f"{label_layer.name}.tif")
+
+            grid_layout.addWidget(checkbox, i, 0)
+            grid_layout.addWidget(line_edit, i, 1)
+
+            checkboxes.append(checkbox)
+            line_edits.append(line_edit)
+
+        save_button = QPushButton("Save")
+        grid_layout.addWidget(save_button, len(label_layers), 1)
+        save_button.clicked.connect(save_dialog.accept)
+
+        save_dialog.setLayout(grid_layout)
+
+        return save_dialog, checkboxes, line_edits
 
 
 class DataLoaderController:
@@ -121,7 +170,31 @@ class DataLoaderController:
         self.model = model
         self.view = view
 
+        # Connect signals and slots
+        self.view.load_yaml_button.clicked.connect(self.load_yaml_config)
         self.view.load_button.clicked.connect(self.load_data)
+        self.view.save_labels_button.clicked.connect(self.save_label_layers)
+
+    def load_yaml_config(self):
+        yaml_filter = "YAML files (*.yaml *.yml);;All files (*)"
+        current_path = self.view.yaml_path_edit.text()
+
+        if os.path.isfile(current_path):
+            self.model.config = self.model.load_config(current_path)
+            return
+
+        if os.path.isdir(current_path):
+            initial_dir = current_path
+        else:
+            initial_dir = ""
+
+        yaml_path, _ = QFileDialog.getOpenFileName(self.view,
+                                                   "Open YAML Config File",
+                                                   initial_dir, yaml_filter)
+
+        if yaml_path:
+            self.model.config = self.model.load_config(yaml_path)
+            self.view.yaml_path_edit.setText(yaml_path)
 
     def load_data(self):
         self.model.load_images()
@@ -133,6 +206,30 @@ class DataLoaderController:
 
         for label in self.model.labels.values():
             self.view.viewer.add_layer(label)
+
+    def save_label_layers(self):
+        current_path = self.view.save_path_edit.text()
+
+        if os.path.isdir(current_path):
+            initial_dir = current_path
+        else:
+            initial_dir = os.path.expanduser("~")
+
+        save_dir = QFileDialog.getExistingDirectory(self.view, "Select Folder",
+                                                    initial_dir)
+        if save_dir:
+            self.view.save_path_edit.setText(save_dir)
+            save_dialog, checkboxes, line_edits = \
+                self.view.create_save_dialog(self.model.labels.values())
+
+            if save_dialog.exec_() == QDialog.Accepted:
+                for checkbox, line_edit in zip(checkboxes, line_edits):
+                    if checkbox.isChecked():
+                        file_name = line_edit.text()
+                        layer_name = checkbox.text()
+
+                        tif.imwrite(os.path.join(save_dir, file_name),
+                                    self.model.labels[layer_name].data)
 
 
 # _________________________________________________________________
