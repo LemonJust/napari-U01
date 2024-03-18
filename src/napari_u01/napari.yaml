@@ -1,0 +1,26 @@
+name: napari-u01
+display_name: Test for cookiecutter
+contributions:
+  commands:
+    - id: napari-u01.LabelClassificationWidget
+      python_name: napari_u01.classification_widget:LabelClassificationWidget
+      title: Label Classification
+    - id: napari-u01.LayerVisabilityWidget
+      python_name: napari_u01.visability:LayerVisabilityWidget
+      title: Layer Visability
+    - id: napari-u01.DataLoaderWidget
+      python_name: napari_u01.data_loader:DataLoaderWidget
+      title: Data Loader
+    - id: napari-u01.SynapseWidget
+      python_name: napari_u01.synapses:SynapseWidget
+      title: Load Points
+  widgets:
+    - command: napari-u01.LayerVisabilityWidget
+      display_name: Layer Visability
+    - command: napari-u01.LabelClassificationWidget
+      display_name: Label Classification
+    - command: napari-u01.DataLoaderWidget
+      display_name: Data Loader
+    - command: napari-u01.SynapseWidget
+      display_name: Load Points
+

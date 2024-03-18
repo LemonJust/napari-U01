@@ -114,8 +114,7 @@ class DataLoaderView(QWidget):
 
         # Add Load YAML Config UI
         load_yaml_layout = QHBoxLayout()
-        # TODO: Remove hard-coded path after testing
-        config_path = 'D:/Code/repos/napari-U01/data/demo3/'
+        config_path = 'enter path to config file here...'
         self.yaml_path_edit = QLineEdit(config_path)
         self.load_yaml_button = QPushButton("Load Config")
         load_yaml_layout.addWidget(QLabel("YAML Config:"))
@@ -151,7 +150,10 @@ class DataLoaderView(QWidget):
 
         for i, label_layer in enumerate(label_layers):
             checkbox = QCheckBox(label_layer.name)
-            line_edit = QLineEdit(f"{label_layer.name}.tif")
+            # replace any special characters with underscores
+            file_name = ''.join([c if c.isalnum() or c in ['-', '_'] else '_'
+                         for c in label_layer.name])
+            line_edit = QLineEdit(f"{file_name}.tif")
 
             grid_layout.addWidget(checkbox, i, 0)
             grid_layout.addWidget(line_edit, i, 1)

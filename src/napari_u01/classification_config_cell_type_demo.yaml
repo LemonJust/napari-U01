@@ -1,0 +1,62 @@
+data:
+  images:
+    - name: nuclei_img
+      path: D:/Code/repos/napari-U01/data/demo3/nuclei_img.tif
+    - name: neuron_img
+      path: D:/Code/repos/napari-U01/data/demo3/neuron_img.tif
+  labels:
+    - name: nuclei_labels
+      path: D:/Code/repos/napari-U01/data/demo3/demo_nuclei_labels.tif
+      zero_min: False
+      color: None
+    - name: neuron_labels
+      path: D:/Code/repos/napari-U01/data/demo3/demo_neuron_labels.tif
+      zero_min: False
+      color: None
+    - name: inhibitory_neuron_labels
+      path: D:/Code/repos/napari-U01/data/demo3/demo_inhibitory_labels.tif
+      zero_min: False
+      color: None
+    - name: excitatory_neuron_labels
+      path: D:/Code/repos/napari-U01/data/demo3/demo_excitatory_labels.tif
+      zero_min: False
+      color: None
+    - name: glia_labels
+      path: D:/Code/repos/napari-U01/data/demo3/demo_glia_labels.tif
+      zero_min: False
+      color: None
+
+classifications:
+  - group: cell type
+    classes:
+      - name: nuclei
+        color: (0.98, 0.98, 0.98)
+        key: u
+        labels: nuclei_labels # Give labels name if loading from file
+
+      - name: neuron
+        color: (0.83, 0, 0.98)
+        key: n
+        labels: neuron_labels # Give labels name if loading from file
+        subclasses:
+          - name: excitatory
+            color: None # if None, use parent color
+            key: e
+            labels: excitatory_neuron_labels
+          - name: inhibitory
+            color: None
+            key: i
+            labels: inhibitory_neuron_labels
+
+      - name: glia
+        color: (0, 0.90, 1)
+        key: g
+        labels: glia_labels # Give labels name if loading from file
+
+      - name: background
+        color: (1, 0.09, 0.27)
+        key: Delete
+        labels: None # Give labels name if loading from file
+
+
+

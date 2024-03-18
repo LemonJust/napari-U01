@@ -5,7 +5,7 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QLabel, QPushButton, QHBoxLayout, QLineEdit
 # Controller
 import napari
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCheckBox
 
 
 # Model _________________________________________________________________
@@ -14,6 +14,7 @@ class LayerVisibilityModel:
         self.key_to_layer_map = defaultdict(list)
         self.solo_layers = None
         self.visible_layers = []
+        self.always_visible_layers = []
 
     def set_mapping(self, key, layer_name):
         self.key_to_layer_map[key].append(layer_name)
@@ -76,6 +77,13 @@ class LayerVisibilityView(QWidget):
         assign_button.clicked.connect(
             lambda: self.on_assign_clicked(row))
 
+        # _________________________________
+        # Add a checkbox to each row
+        checkbox = QCheckBox("Always visible")
+        checkbox.stateChanged.connect(
+            lambda: self.on_checkbox_state_changed(row))
+        # _________________________________
+
         # hide assign button by default
         assign_button.hide()
         # show assign button only if layer is selected or text changed
@@ -87,10 +95,16 @@ class LayerVisibilityView(QWidget):
         h_layout.addWidget(number_label)
         h_layout.addWidget(number_box)
         h_layout.addWidget(assign_button)
+        # _________________________________
+        h_layout.addWidget(checkbox)  # Add the checkbox to the layout
+        # _________________________________
 
         self.rows[row] = {'layer': layer_combo_box,
                           'key': number_box,
-                          'assign': assign_button}
+                          'assign': assign_button,
+                          # _________________________________
+                          'checkbox': checkbox}  # Store the checkbox
+                          # _________________________________
 
         # add layer combo box
         self._layout.addLayout(h_layout)
@@ -100,6 +114,15 @@ class LayerVisibilityView(QWidget):
         layer_name = self.rows[row]['layer'].currentText()
         self.assign_clicked.emit(row, key, layer_name)
 
+    # _________________________________
+    def on_checkbox_state_changed(self, row):
+        layer_name = self.rows[row]['layer'].currentText()
+        if self.rows[row]['checkbox'].isChecked():
+            self.model.always_visible_layers.append(layer_name)
+        else:
+            self.model.always_visible_layers.remove(layer_name)
+    # _________________________________
+
     def populate_combo_box(self, row):
         # populate combo box with layers that do not have bindings
         self.rows[row]['layer'].clear()
@@ -108,7 +131,10 @@ class LayerVisibilityView(QWidget):
 
     def show_only_layers(self, layers):
         for layer in self.viewer.layers:
-            if layer.name in layers:
+            # _________________________________
+            if layer.name in layers \
+                    or layer.name in self.model.always_visible_layers:
+                # _________________________________
                 layer.visible = True
             else:
                 layer.visible = False
@@ -168,9 +194,13 @@ class LayerVisibilityController:
         # if in the solo mode, restore the previous state of the layers
         # or switch to another solo layer
         else:
+            # if the key pressed is for the layer currently in solo mode,
+            # restore the previous state of the layers
             if layers == self.model.solo_layers:
                 self.model.solo_layers = None
                 self.view.restore_all_layers_visibility()
+            # if the key pressed is for another layer,
+            # switch to the solo mode for that layer
             else:
                 self.model.solo_layers = layers
                 self.view.show_only_layers(layers)

@@ -113,7 +113,7 @@ class LabelClassificationView:
         segmentation_layer.refresh()
 
         # Add the label to the new class layer
-        label_class = self.model.classifications[label]['class']
+        label_class = self.model.class_per_label[label]['class']
         segmentation_layer = self.viewer.layers[label_class]
         segmentation_layer.data[mask] = label
 
@@ -128,12 +128,12 @@ class LabelClassificationView:
     def update_classified_labels_list(self):
         # Update the list of classified labels in the separate window
         self.label_list.clear()
-        self.label_list.populate(self.model.classifications)
+        self.label_list.populate(self.model.class_per_label)
 
     def move_viewer_to_label(self, label):
         # Move the viewer to the center of the given label and zoom to the
         # specified box size
-        label_class = self.model.classifications[label]['class']
+        label_class = self.model.class_per_label[label]['class']
         segmentation_layer = self.viewer.layers[label_class]
         mask = segmentation_layer.data == label
         z, y, x = np.where(mask)
@@ -152,10 +152,10 @@ class LabelClassificationView:
         # looks like partseg highlights labels by adding a new layer too!
         # https://github.com/napari/napari/issues/3727
 
-        if label not in self.model.classifications:
+        if label not in self.model.class_per_label:
             segmentation_layer = self.viewer.layers['unclassified']
         else:
-            label_class = self.model.classifications[label]['class']
+            label_class = self.model.class_per_label[label]['class']
             segmentation_layer = self.viewer.layers[label_class]
         mask = segmentation_layer.data == label
         segmentation_layer.selected_label = label

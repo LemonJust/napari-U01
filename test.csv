@@ -1,0 +1,9 @@
+ID,Class,Subclass
+38399,neuron,
+32789,glia,
+35756,neuron,inhibitory
+35509,neuron,excitatory
+32768,background,
+40119,neuron,inhibitory
+37603,neuron,excitatory
+38067,neuron,excitatory

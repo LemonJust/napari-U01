@@ -15,6 +15,8 @@ from PyQt5.QtWidgets import QWidget
 if TYPE_CHECKING:
     import napari
 
+from PyQt5.QtWidgets import QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout
+
 
 # Connect the keyboard input and double-click events to the controller
 def setup_classification_callbacks(controller, view, config):
@@ -62,10 +64,26 @@ def setup_classification_callbacks(controller, view, config):
 class LabelClassificationWidget(QWidget):
     def __init__(self, napari_viewer: 'napari.viewer.Viewer' = None):
         super().__init__()
-        config_path = 'D:/Code/repos/' \
-                      'napari-U01/data/demo3/' \
-                      'classification_config_cell_type_real_data.yaml'
 
+        # Create the textbox and button for config file location
+        self.config_textbox = QLineEdit()
+        self.config_button = QPushButton("Load Config")
+        self.config_button.clicked.connect(lambda: self.load_config(napari_viewer))
+
+        # Create the layout for the textbox and button
+        config_layout = QHBoxLayout()
+        config_layout.addWidget(self.config_textbox)
+        config_layout.addWidget(self.config_button)
+
+        # Create the main layout for the widget
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(config_layout)
+
+        # Set the main layout for the widget
+        self.setLayout(main_layout)
+
+    def load_config(self, napari_viewer):
+        config_path = self.config_textbox.text()
         self.model = LabelClassificationModel(napari_viewer.layers,
                                               config_path)
         self.view = LabelClassificationView(self.model, napari_viewer)
