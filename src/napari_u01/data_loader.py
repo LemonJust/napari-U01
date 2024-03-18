@@ -12,16 +12,17 @@ from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
 
 
 class DataLoaderModel:
-    def __init__(self, config_path):
-        self.config = self.load_config(config_path)
+    def __init__(self, config_path=None):
+        self.config = {}
+        if config_path is not None:
+            self.load_config(config_path)
         self.images = {}
         self.labels = {}
 
-    @staticmethod
-    def load_config(config_path):
+    def load_config(self, config_path):
         with open(config_path, 'r') as config_file:
             config = yaml.unsafe_load(config_file)
-        return config
+        self.config = config
 
     def load_images(self):
         for img_info in self.config['data']['images']:
@@ -113,7 +114,9 @@ class DataLoaderView(QWidget):
 
         # Add Load YAML Config UI
         load_yaml_layout = QHBoxLayout()
-        self.yaml_path_edit = QLineEdit()
+        # TODO: Remove hard-coded path after testing
+        config_path = 'D:/Code/repos/napari-U01/data/demo3/'
+        self.yaml_path_edit = QLineEdit(config_path)
         self.load_yaml_button = QPushButton("Load Config")
         load_yaml_layout.addWidget(QLabel("YAML Config:"))
         load_yaml_layout.addWidget(self.yaml_path_edit)
@@ -191,9 +194,8 @@ class DataLoaderController:
         yaml_path, _ = QFileDialog.getOpenFileName(self.view,
                                                    "Open YAML Config File",
                                                    initial_dir, yaml_filter)
-
         if yaml_path:
-            self.model.config = self.model.load_config(yaml_path)
+            self.model.load_config(yaml_path)
             self.view.yaml_path_edit.setText(yaml_path)
 
     def load_data(self):
@@ -236,9 +238,8 @@ class DataLoaderController:
 class DataLoaderWidget(QWidget):
     def __init__(self, napari_viewer: 'napari.viewer.Viewer' = None):
         super().__init__()
-        config_path = 'D:/Code/repos/napari-U01/data/demo3/' \
-                      'classification_config_cell_type_demo.yaml'
-        self.model = DataLoaderModel(config_path)
+
+        self.model = DataLoaderModel()
         self.view = DataLoaderView(napari_viewer)
         self.controller = DataLoaderController(self.model, self.view)
 
